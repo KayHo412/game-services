@@ -35,7 +35,7 @@ const mockDb: any = {
       then: (resolve: any) => resolve(store[table] ?? []),
     }),
   }),
-  update: (table: string) => ({ set: () => ({ where: async () => {} }) }),
+  update: (_table: string) => ({ set: () => ({ where: async () => {} }) }),
 };
 
 jest.mock('@/lib/db', () => ({ db: mockDb }));
