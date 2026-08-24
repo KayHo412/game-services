@@ -10,7 +10,6 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 export const metadata: Metadata = {
   title: "Arena — Matchmaking Backend",
   description: "Ranked matchmaking service with Elo ratings, queues, matches, friends, and realtime events.",
-  generator: "v0.app",
 }
 
 export const viewport: Viewport = {
@@ -28,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
-      <body className="antialiased font-sans">
+      <body className="font-sans antialiased">
         {children}
         <Toaster position="top-right" />
         {process.env.NODE_ENV === "production" && <Analytics />}

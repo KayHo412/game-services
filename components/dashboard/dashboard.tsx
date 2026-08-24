@@ -99,14 +99,14 @@ export function Dashboard({
 }) {
   const router = useRouter()
   const [player, setPlayer] = useState<Player | null>(initialPlayer)
-  
+
   // Dashboard states
   const [queueStatus, setQueueStatus] = useState<QueueStatus>({ inQueue: false })
   const [gameMode, setGameMode] = useState<string>("ranked_1v1")
   const [matches, setMatches] = useState<MatchDetail[]>([])
   const [friends, setFriends] = useState<FriendItem[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  
+
   // Form states
   const [friendUsername, setFriendUsername] = useState("")
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
@@ -363,58 +363,56 @@ export function Dashboard({
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
+    <div className="min-h-screen bg-background px-4 py-6 text-foreground md:px-8 md:py-10 font-sans">
+      <div className="mx-auto max-w-7xl space-y-6">
+
         {/* Header Bar */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+        <header className="flex flex-col items-start justify-between gap-4 rounded-lg border bg-card p-5 sm:flex-row sm:items-center">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-white">{player.displayName}</h1>
-              <Badge variant="outline" className="border-indigo-500 text-indigo-400 font-mono">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">{player.displayName}</h1>
+              <Badge variant="outline" className="font-mono text-[11px]">
                 @{player.username}
               </Badge>
               <Badge
                 variant="secondary"
                 className={
                   player.status === "in_match"
-                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                    ? "text-foreground"
                     : player.status === "in_queue"
-                    ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                    : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                    ? "text-foreground"
+                    : "text-muted-foreground"
                 }
               >
                 ● {player.status}
               </Badge>
             </div>
-            <p className="text-xs text-slate-400">User: {user.name} ({user.email})</p>
+            <p className="text-xs text-muted-foreground">User: {user.name} ({user.email})</p>
           </div>
 
           {/* Player Quick Stats */}
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <div className="text-2xl font-black text-amber-400 font-mono">{player.rating}</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Elo Rating</div>
+              <div className="font-mono text-2xl font-semibold text-foreground">{player.rating}</div>
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Elo Rating</div>
             </div>
-            <Separator orientation="vertical" className="h-8 bg-slate-800" />
+            <Separator orientation="vertical" className="h-8 bg-border" />
             <div className="text-center">
-              <div className="text-sm font-semibold text-slate-200">
-                <span className="text-emerald-400">{player.wins}W</span> /{" "}
-                <span className="text-rose-400">{player.losses}L</span> /{" "}
-                <span className="text-amber-300">{player.draws}D</span>
+              <div className="text-sm font-medium text-foreground">
+                <span>{player.wins}W</span> / <span>{player.losses}L</span> / <span>{player.draws}D</span>
               </div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
                 {player.gamesPlayed} Played
               </div>
             </div>
-            <Separator orientation="vertical" className="h-8 bg-slate-800" />
+            <Separator orientation="vertical" className="h-8 bg-border" />
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={refreshAll}
                 title="Refresh All Data"
-                className="text-slate-400 hover:text-white hover:bg-slate-800"
+                className="text-muted-foreground"
               >
                 <RefreshCw className="w-4 h-4" />
               </Button>
@@ -422,7 +420,7 @@ export function Dashboard({
                 variant="outline"
                 size="sm"
                 onClick={handleSignOut}
-                className="border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
+                className="bg-background"
               >
                 <LogOut className="w-4 h-4 mr-2" /> Sign Out
               </Button>
@@ -431,36 +429,36 @@ export function Dashboard({
         </header>
 
         {/* Realtime Stream Bar */}
-        <div className="flex items-center justify-between bg-slate-900/60 border border-slate-800 px-4 py-2.5 rounded-lg text-xs">
+        <div className="flex items-center justify-between rounded-md border bg-card px-4 py-2.5 text-xs">
           <div className="flex items-center gap-2">
             <span
-              className={`w-2 h-2 rounded-full ${
-                connected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+              className={`h-2 w-2 rounded-full ${
+                connected ? "bg-foreground/70" : "bg-muted-foreground/70"
               }`}
             />
-            <span className="text-slate-300 font-medium">
+            <span className="font-medium text-foreground">
               Realtime Event Stream (/api/events): {connected ? "Connected" : "Disconnected"}
             </span>
           </div>
-          <span className="text-slate-500">Listening for SSE live events...</span>
+          <span className="text-muted-foreground">Listening for SSE live events...</span>
         </div>
 
         {/* Main Workspace Tabs */}
         <Tabs defaultValue="matchmaking" className="space-y-6">
-          <TabsList className="bg-slate-900 border border-slate-800 p-1">
-            <TabsTrigger value="matchmaking" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+          <TabsList className="border bg-card p-1">
+            <TabsTrigger value="matchmaking">
               <Swords className="w-4 h-4 mr-2" /> Matchmaking & Matches
             </TabsTrigger>
-            <TabsTrigger value="friends" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <TabsTrigger value="friends">
               <Users className="w-4 h-4 mr-2" /> Friends ({friends.filter(f => f.status === 'pending' && f.direction === 'incoming').length})
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <TabsTrigger value="leaderboard">
               <Trophy className="w-4 h-4 mr-2" /> Leaderboard
             </TabsTrigger>
-            <TabsTrigger value="events" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <TabsTrigger value="events">
               <Activity className="w-4 h-4 mr-2" /> Live SSE Logs ({eventLogs.length})
             </TabsTrigger>
-            <TabsTrigger value="tester" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <TabsTrigger value="tester">
               <Terminal className="w-4 h-4 mr-2" /> API Tester
             </TabsTrigger>
           </TabsList>
@@ -468,18 +466,18 @@ export function Dashboard({
           {/* TAB 1: Matchmaking & Matches */}
           <TabsContent value="matchmaking" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               {/* Matchmaking Queue Controls */}
-              <Card className="bg-slate-900 border-slate-800">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between text-white">
+                  <CardTitle className="flex items-center justify-between">
                     <span>Matchmaking Queue</span>
                     {queueStatus.inQueue ? (
-                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse">
+                      <Badge variant="secondary" className="text-foreground">
                         Searching...
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-slate-400 border-slate-700">
+                      <Badge variant="outline" className="text-muted-foreground">
                         Idle
                       </Badge>
                     )}
@@ -488,18 +486,18 @@ export function Dashboard({
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {queueStatus.inQueue ? (
-                    <div className="space-y-4 bg-slate-950/60 p-4 rounded-lg border border-slate-800">
+                    <div className="space-y-4 rounded-md border bg-muted/30 p-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Game Mode:</span>
-                        <span className="font-mono text-indigo-400 font-semibold">{queueStatus.gameMode}</span>
+                        <span className="text-muted-foreground">Game Mode:</span>
+                        <span className="font-mono font-medium text-foreground">{queueStatus.gameMode}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Wait Time:</span>
-                        <span className="font-mono text-white">{queueStatus.waitingSeconds}s</span>
+                        <span className="text-muted-foreground">Wait Time:</span>
+                        <span className="font-mono text-foreground">{queueStatus.waitingSeconds}s</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Rating Range:</span>
-                        <span className="font-mono text-amber-400">±{queueStatus.currentTolerance}</span>
+                        <span className="text-muted-foreground">Rating Range:</span>
+                        <span className="font-mono text-foreground">±{queueStatus.currentTolerance}</span>
                       </div>
 
                       <Button
@@ -514,13 +512,13 @@ export function Dashboard({
                   ) : (
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-300">Select Game Mode</label>
+                        <label className="text-xs font-medium text-muted-foreground">Select Game Mode</label>
                         <div className="grid grid-cols-2 gap-2">
                           <Button
                             type="button"
                             variant={gameMode === "ranked_1v1" ? "default" : "outline"}
                             onClick={() => setGameMode("ranked_1v1")}
-                            className={gameMode === "ranked_1v1" ? "bg-indigo-600 hover:bg-indigo-500" : "border-slate-800"}
+                            className={gameMode === "ranked_1v1" ? "" : ""}
                           >
                             Ranked 1v1
                           </Button>
@@ -528,7 +526,7 @@ export function Dashboard({
                             type="button"
                             variant={gameMode === "casual_1v1" ? "default" : "outline"}
                             onClick={() => setGameMode("casual_1v1")}
-                            className={gameMode === "casual_1v1" ? "bg-indigo-600 hover:bg-indigo-500" : "border-slate-800"}
+                            className={gameMode === "casual_1v1" ? "" : ""}
                           >
                             Casual 1v1
                           </Button>
@@ -538,31 +536,31 @@ export function Dashboard({
                       <Button
                         onClick={handleJoinQueue}
                         disabled={loadingAction === "join_queue"}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
+                        className="w-full"
                       >
                         <Play className="w-4 h-4 mr-2" /> Join Queue (POST /api/matchmaking)
                       </Button>
                     </div>
                   )}
 
-                  <Separator className="bg-slate-800" />
+                  <Separator className="bg-border" />
 
                   {/* Manual Worker Tick Button */}
-                  <div className="space-y-2 bg-indigo-950/30 border border-indigo-900/40 p-4 rounded-lg">
+                  <div className="space-y-2 rounded-md border bg-muted/30 p-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-indigo-300 flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-xs font-semibold text-foreground">
                         <Zap className="w-3.5 h-3.5" /> Worker Simulator
                       </span>
-                      <span className="text-[10px] text-indigo-400/70 font-mono">POST /api/matchmaking/tick</span>
+                      <span className="font-mono text-[10px] text-muted-foreground">POST /api/matchmaking/tick</span>
                     </div>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       Instantly triggers the matchmaking pairing pass (normally run on cron). Pairs compatible players in queue into active matches.
                     </p>
                     <Button
                       onClick={handleTriggerTick}
                       disabled={loadingAction === "trigger_tick"}
                       variant="outline"
-                      className="w-full border-indigo-800 text-indigo-300 hover:bg-indigo-900/50"
+                      className="w-full"
                     >
                       <Play className="w-4 h-4 mr-2" /> Run Matchmaking Tick Now
                     </Button>
@@ -571,19 +569,19 @@ export function Dashboard({
               </Card>
 
               {/* Match History & Active Match Reporting */}
-              <Card className="bg-slate-900 border-slate-800">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between">
                     <span>Recent & Active Matches</span>
-                    <Button variant="ghost" size="sm" onClick={refreshMatches} className="text-slate-400">
+                    <Button variant="ghost" size="sm" onClick={refreshMatches} className="text-muted-foreground">
                       <RefreshCw className="w-3.5 h-3.5" />
                     </Button>
                   </CardTitle>
                   <CardDescription>View matches and report outcomes to test Elo calculation engine</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                <CardContent className="max-h-125 space-y-4 overflow-y-auto pr-1">
                   {matches.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500 text-sm">
+                    <div className="py-8 text-center text-sm text-muted-foreground">
                       No matches found. Join queue with 2 users (or multiple browser tabs) and trigger a tick!
                     </div>
                   ) : (
@@ -594,19 +592,19 @@ export function Dashboard({
                       return (
                         <div
                           key={m.id}
-                          className="bg-slate-950 border border-slate-800 p-4 rounded-lg space-y-3"
+                          className="space-y-3 rounded-md border bg-muted/25 p-4"
                         >
                           <div className="flex justify-between items-center text-xs">
-                            <span className="font-mono text-slate-400">{m.id}</span>
+                            <span className="font-mono text-muted-foreground">{m.id}</span>
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-indigo-400 border-indigo-900">
+                              <Badge variant="outline" className="font-mono text-muted-foreground">
                                 {m.gameMode}
                               </Badge>
                               <Badge
                                 className={
                                   m.status === "active"
-                                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
-                                    : "bg-slate-800 text-slate-300"
+                                    ? "text-foreground"
+                                    : "text-muted-foreground"
                                 }
                               >
                                 {m.status}
@@ -615,18 +613,18 @@ export function Dashboard({
                           </div>
 
                           <div className="flex items-center justify-between text-sm py-1">
-                            <div className="font-semibold text-slate-200">
+                            <div className="font-semibold text-foreground">
                               You ({meParticipant?.ratingBefore} Elo)
                             </div>
-                            <span className="text-slate-500 text-xs font-bold">VS</span>
-                            <div className="font-semibold text-slate-200">
+                            <span className="text-xs font-bold text-muted-foreground">VS</span>
+                            <div className="font-semibold text-foreground">
                               Opponent ({opponentParticipant?.ratingBefore ?? "???"} Elo)
                             </div>
                           </div>
 
                           {m.status === "active" ? (
-                            <div className="pt-2 border-t border-slate-850 space-y-2">
-                              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                            <div className="space-y-2 border-t pt-2">
+                              <span className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">
                                 Report Outcome (POST /api/matches/:id)
                               </span>
                               <div className="grid grid-cols-3 gap-2">
@@ -634,7 +632,7 @@ export function Dashboard({
                                   size="sm"
                                   onClick={() => handleReportResult(m.id, player.id)}
                                   disabled={loadingAction === `report_${m.id}`}
-                                  className="bg-emerald-700 hover:bg-emerald-600 text-xs"
+                                  className="text-xs"
                                 >
                                   Report Win
                                 </Button>
@@ -642,7 +640,8 @@ export function Dashboard({
                                   size="sm"
                                   onClick={() => handleReportResult(m.id, opponentParticipant?.playerId ?? null)}
                                   disabled={loadingAction === `report_${m.id}`}
-                                  className="bg-rose-800 hover:bg-rose-700 text-xs"
+                                  variant="outline"
+                                  className="text-xs"
                                 >
                                   Report Loss
                                 </Button>
@@ -651,22 +650,22 @@ export function Dashboard({
                                   onClick={() => handleReportResult(m.id, null)}
                                   disabled={loadingAction === `report_${m.id}`}
                                   variant="secondary"
-                                  className="bg-slate-800 text-slate-200 hover:bg-slate-700 text-xs"
+                                  className="text-xs"
                                 >
                                   Report Draw
                                 </Button>
                               </div>
                             </div>
                           ) : (
-                            <div className="pt-2 border-t border-slate-900 flex justify-between items-center text-xs">
-                              <span className="text-slate-400">
+                            <div className="flex items-center justify-between border-t pt-2 text-xs">
+                              <span className="text-muted-foreground">
                                 Result:{" "}
-                                <span className="font-bold text-white uppercase">{m.result ?? "completed"}</span>
+                                <span className="font-bold uppercase text-foreground">{m.result ?? "completed"}</span>
                               </span>
                               {meParticipant?.ratingDelta !== null && meParticipant?.ratingDelta !== undefined && (
                                 <span
                                   className={`font-mono font-bold ${
-                                    meParticipant.ratingDelta >= 0 ? "text-emerald-400" : "text-rose-400"
+                                    meParticipant.ratingDelta >= 0 ? "text-foreground" : "text-muted-foreground"
                                   }`}
                                 >
                                   {meParticipant.ratingDelta >= 0 ? `+${meParticipant.ratingDelta}` : meParticipant.ratingDelta} Elo
@@ -687,11 +686,11 @@ export function Dashboard({
           {/* TAB 2: Friends Management */}
           <TabsContent value="friends" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               {/* Send Request Card */}
-              <Card className="bg-slate-900 border-slate-800">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Send Friend Request</CardTitle>
+                  <CardTitle>Send Friend Request</CardTitle>
                   <CardDescription>Enter another player&apos;s username to send a request (POST /api/friends)</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -700,12 +699,11 @@ export function Dashboard({
                       placeholder="Username (e.g. player_two)"
                       value={friendUsername}
                       onChange={(e) => setFriendUsername(e.target.value)}
-                      className="bg-slate-950 border-slate-800 text-white"
+                      className="bg-background"
                     />
                     <Button
                       type="submit"
                       disabled={loadingAction === "send_friend" || !friendUsername.trim()}
-                      className="bg-indigo-600 hover:bg-indigo-500"
                     >
                       <UserPlus className="w-4 h-4 mr-2" /> Send
                     </Button>
@@ -714,41 +712,41 @@ export function Dashboard({
               </Card>
 
               {/* Friends List */}
-              <Card className="bg-slate-900 border-slate-800">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between">
                     <span>Friendships & Requests</span>
-                    <Button variant="ghost" size="sm" onClick={refreshFriends} className="text-slate-400">
+                    <Button variant="ghost" size="sm" onClick={refreshFriends} className="text-muted-foreground">
                       <RefreshCw className="w-3.5 h-3.5" />
                     </Button>
                   </CardTitle>
                   <CardDescription>Manage incoming requests, accepted friends, and outgoing pending requests</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 max-h-[500px] overflow-y-auto">
+                <CardContent className="max-h-125 space-y-3 overflow-y-auto">
                   {friends.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500 text-sm">
+                    <div className="py-8 text-center text-sm text-muted-foreground">
                       No friendships found. Send a request to another registered player!
                     </div>
                   ) : (
                     friends.map((f) => (
                       <div
                         key={f.id}
-                        className="flex items-center justify-between bg-slate-950 border border-slate-800 p-3 rounded-lg text-sm"
+                        className="flex items-center justify-between rounded-md border bg-muted/25 p-3 text-sm"
                       >
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-white">
+                            <span className="font-semibold text-foreground">
                               {f.friend?.displayName ?? "Unknown Player"}
                             </span>
-                            <span className="text-xs text-slate-400">(@{f.friend?.username})</span>
+                            <span className="text-xs text-muted-foreground">(@{f.friend?.username})</span>
                           </div>
                           <div className="flex items-center gap-2 text-xs">
-                            <Badge variant="outline" className="text-xs py-0 border-slate-800 text-slate-400">
+                            <Badge variant="outline" className="py-0 text-xs text-muted-foreground">
                               {f.status}
                             </Badge>
-                            <span className="text-slate-500">{f.direction}</span>
+                            <span className="text-muted-foreground">{f.direction}</span>
                             {f.friend?.rating && (
-                              <span className="text-amber-400 font-mono text-[11px]">{f.friend.rating} Elo</span>
+                              <span className="font-mono text-[11px] text-foreground">{f.friend.rating} Elo</span>
                             )}
                           </div>
                         </div>
@@ -760,7 +758,7 @@ export function Dashboard({
                                 size="sm"
                                 onClick={() => handleRespondFriend(f.id, "accept")}
                                 disabled={loadingAction === `friend_${f.id}_accept`}
-                                className="bg-emerald-700 hover:bg-emerald-600 h-8 px-2.5"
+                                className="h-8 px-2.5"
                               >
                                 <Check className="w-3.5 h-3.5 mr-1" /> Accept
                               </Button>
@@ -769,7 +767,7 @@ export function Dashboard({
                                 variant="outline"
                                 onClick={() => handleRespondFriend(f.id, "decline")}
                                 disabled={loadingAction === `friend_${f.id}_decline`}
-                                className="border-slate-800 text-slate-400 hover:bg-slate-800 h-8 px-2.5"
+                                className="h-8 px-2.5"
                               >
                                 <X className="w-3.5 h-3.5 mr-1" /> Decline
                               </Button>
@@ -781,7 +779,7 @@ export function Dashboard({
                             variant="ghost"
                             onClick={() => handleRemoveFriend(f.id)}
                             disabled={loadingAction === `friend_remove_${f.id}`}
-                            className="text-slate-500 hover:text-rose-400 hover:bg-slate-900 h-8 w-8"
+                            className="h-8 w-8 text-muted-foreground"
                             title="Delete Friendship"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -798,11 +796,11 @@ export function Dashboard({
 
           {/* TAB 3: Leaderboard */}
           <TabsContent value="leaderboard">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-white flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between">
                   <span>Public Elo Leaderboard</span>
-                  <Button variant="ghost" size="sm" onClick={refreshLeaderboard} className="text-slate-400">
+                  <Button variant="ghost" size="sm" onClick={refreshLeaderboard} className="text-muted-foreground">
                     <RefreshCw className="w-3.5 h-3.5" />
                   </Button>
                 </CardTitle>
@@ -811,18 +809,18 @@ export function Dashboard({
               <CardContent>
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-slate-800 hover:bg-transparent">
-                      <TableHead className="w-16 text-slate-400">Rank</TableHead>
-                      <TableHead className="text-slate-400">Player</TableHead>
-                      <TableHead className="text-slate-400 text-right">Rating</TableHead>
-                      <TableHead className="text-slate-400 text-right">Record (W/L/D)</TableHead>
-                      <TableHead className="text-slate-400 text-right">Status</TableHead>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-16 text-muted-foreground">Rank</TableHead>
+                      <TableHead className="text-muted-foreground">Player</TableHead>
+                      <TableHead className="text-right text-muted-foreground">Rating</TableHead>
+                      <TableHead className="text-right text-muted-foreground">Record (W/L/D)</TableHead>
+                      <TableHead className="text-right text-muted-foreground">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {leaderboard.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-slate-500 py-6">
+                        <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
                           No players on leaderboard yet.
                         </TableCell>
                       </TableRow>
@@ -830,30 +828,28 @@ export function Dashboard({
                       leaderboard.map((lb) => (
                         <TableRow
                           key={lb.id}
-                          className={`border-slate-800 hover:bg-slate-950/50 ${
-                            lb.id === player.id ? "bg-indigo-950/20" : ""
+                          className={`hover:bg-muted/30 ${
+                            lb.id === player.id ? "bg-muted/35" : ""
                           }`}
                         >
-                          <TableCell className="font-mono font-bold text-slate-300">#{lb.rank}</TableCell>
+                          <TableCell className="font-mono font-bold text-foreground">#{lb.rank}</TableCell>
                           <TableCell>
                             <div>
-                              <span className="font-semibold text-white">{lb.displayName}</span>
-                              <span className="text-xs text-slate-400 ml-2">@{lb.username}</span>
+                              <span className="font-semibold text-foreground">{lb.displayName}</span>
+                              <span className="ml-2 text-xs text-muted-foreground">@{lb.username}</span>
                               {lb.id === player.id && (
-                                <Badge className="ml-2 bg-indigo-600 text-white text-[10px]">You</Badge>
+                                <Badge variant="outline" className="ml-2 text-[10px]">You</Badge>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right font-mono font-bold text-amber-400">
+                          <TableCell className="text-right font-mono font-bold text-foreground">
                             {lb.rating}
                           </TableCell>
-                          <TableCell className="text-right text-xs font-mono text-slate-300">
-                            <span className="text-emerald-400">{lb.wins}W</span> -{" "}
-                            <span className="text-rose-400">{lb.losses}L</span> -{" "}
-                            <span className="text-amber-300">{lb.draws}D</span>
+                          <TableCell className="text-right text-xs font-mono text-foreground">
+                            <span>{lb.wins}W</span> - <span>{lb.losses}L</span> - <span>{lb.draws}D</span>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Badge variant="outline" className="text-xs border-slate-800 text-slate-400">
+                            <Badge variant="outline" className="text-xs text-muted-foreground">
                               {lb.status}
                             </Badge>
                           </TableCell>
@@ -868,11 +864,11 @@ export function Dashboard({
 
           {/* TAB 4: Live SSE Logs */}
           <TabsContent value="events">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-white flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between">
                   <span>Server-Sent Events (SSE) Live Feed</span>
-                  <Badge variant="outline" className="text-emerald-400 border-emerald-900">
+                  <Badge variant="outline" className="font-mono text-muted-foreground">
                     Live Channel: user:{player.userId}
                   </Badge>
                 </CardTitle>
@@ -881,19 +877,19 @@ export function Dashboard({
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs max-h-[450px] overflow-y-auto space-y-2">
+                <div className="max-h-112.5 space-y-2 overflow-y-auto rounded-md border bg-muted/25 p-4 font-mono text-xs">
                   {eventLogs.length === 0 ? (
-                    <div className="text-slate-600 text-center py-6">
+                    <div className="py-6 text-center text-muted-foreground">
                       No events received yet. Perform matchmaking or friend actions to trigger realtime events!
                     </div>
                   ) : (
                     eventLogs.map((log, idx) => (
-                      <div key={idx} className="border-b border-slate-900 pb-2 text-slate-300">
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
-                          <span className="text-indigo-400 font-bold">[{log.event.type}]</span>
+                      <div key={idx} className="border-b border-border pb-2 text-foreground">
+                        <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                          <span className="font-bold text-foreground">[{log.event.type}]</span>
                           <span>{new Date(log.at).toLocaleTimeString()}</span>
                         </div>
-                        <pre className="text-slate-400 whitespace-pre-wrap bg-slate-900/40 p-2 rounded">
+                        <pre className="whitespace-pre-wrap rounded-sm bg-background p-2 text-muted-foreground">
                           {JSON.stringify(log.event, null, 2)}
                         </pre>
                       </div>
@@ -906,21 +902,21 @@ export function Dashboard({
 
           {/* TAB 5: API Tester */}
           <TabsContent value="tester">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-white">Raw API Endpoint Tester</CardTitle>
+                <CardTitle>Raw API Endpoint Tester</CardTitle>
                 <CardDescription>
                   Manually invoke any backend API route directly from the frontend to inspect response data & HTTP status
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                
+
                 {/* Method & Path Selector */}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <select
                     value={apiMethod}
                     onChange={(e) => setApiMethod(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 text-white rounded-md px-3 py-2 text-sm font-mono"
+                    className="rounded-md border bg-background px-3 py-2 text-sm font-mono text-foreground"
                   >
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
@@ -932,13 +928,13 @@ export function Dashboard({
                     value={apiPath}
                     onChange={(e) => setApiPath(e.target.value)}
                     placeholder="/api/players"
-                    className="bg-slate-950 border-slate-800 text-white font-mono text-sm"
+                    className="bg-background font-mono text-sm"
                   />
 
                   <Button
                     onClick={handleExecuteApiTest}
                     disabled={loadingAction === "api_test"}
-                    className="bg-indigo-600 hover:bg-indigo-500 shrink-0"
+                    className="shrink-0"
                   >
                     <Play className="w-4 h-4 mr-2" /> Execute
                   </Button>
@@ -947,27 +943,27 @@ export function Dashboard({
                 {/* Body Input for POST/PATCH */}
                 {(apiMethod === "POST" || apiMethod === "PATCH") && (
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400 font-mono">JSON Body Payload:</label>
+                    <label className="text-xs font-mono text-muted-foreground">JSON Body Payload:</label>
                     <textarea
                       value={apiBody}
                       onChange={(e) => setApiBody(e.target.value)}
                       placeholder='{"username": "test_player"}'
                       rows={3}
-                      className="w-full bg-slate-950 border border-slate-800 text-white rounded-md p-3 font-mono text-xs"
+                      className="w-full rounded-md border bg-background p-3 font-mono text-xs text-foreground"
                     />
                   </div>
                 )}
 
                 {/* Quick Preset Buttons */}
                 <div className="space-y-2">
-                  <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     Quick Preset Requests:
                   </span>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-slate-800 text-xs"
+                      className="text-xs"
                       onClick={() => {
                         setApiMethod("GET")
                         setApiPath("/api/players")
@@ -978,7 +974,7 @@ export function Dashboard({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-slate-800 text-xs"
+                      className="text-xs"
                       onClick={() => {
                         setApiMethod("GET")
                         setApiPath("/api/matchmaking")
@@ -989,7 +985,7 @@ export function Dashboard({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-slate-800 text-xs"
+                      className="text-xs"
                       onClick={() => {
                         setApiMethod("POST")
                         setApiPath("/api/matchmaking/tick")
@@ -1001,7 +997,7 @@ export function Dashboard({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-slate-800 text-xs"
+                      className="text-xs"
                       onClick={() => {
                         setApiMethod("GET")
                         setApiPath("/api/matches")
@@ -1012,7 +1008,7 @@ export function Dashboard({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-slate-800 text-xs"
+                      className="text-xs"
                       onClick={() => {
                         setApiMethod("GET")
                         setApiPath("/api/friends")
@@ -1023,7 +1019,7 @@ export function Dashboard({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-slate-800 text-xs"
+                      className="text-xs"
                       onClick={() => {
                         setApiMethod("GET")
                         setApiPath("/api/leaderboard")
@@ -1036,22 +1032,22 @@ export function Dashboard({
 
                 {/* Output Inspector */}
                 {apiResponse && (
-                  <div className="space-y-2 border-t border-slate-800 pt-4">
+                  <div className="space-y-2 border-t pt-4">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-300">API Response Output:</span>
+                      <span className="font-semibold text-foreground">API Response Output:</span>
                       {apiResponse.status && (
                         <Badge
                           className={
                             apiResponse.status < 400
-                              ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                              : "bg-rose-500/20 text-rose-400 border-rose-500/30"
+                              ? "text-foreground"
+                              : "text-destructive"
                           }
                         >
                           Status: {apiResponse.status}
                         </Badge>
                       )}
                     </div>
-                    <pre className="bg-slate-950 border border-slate-800 p-4 rounded-lg text-emerald-400 font-mono text-xs overflow-x-auto max-h-[350px]">
+                    <pre className="max-h-87.5 overflow-x-auto rounded-md border bg-muted/25 p-4 font-mono text-xs text-foreground">
                       {JSON.stringify(apiResponse.data ?? apiResponse.error, null, 2)}
                     </pre>
                   </div>

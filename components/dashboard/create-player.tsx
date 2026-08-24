@@ -34,42 +34,47 @@ export function CreatePlayer({ onCreated }: { onCreated?: (player: any) => void 
   }
 
   return (
-    <main className="min-h-svh flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Create your player profile</CardTitle>
-          <CardDescription>
-            Pick a username to enter the arena. You start at 1200 Elo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={submit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="shadow_striker"
-                required
-              />
-              <p className="text-xs text-muted-foreground">3-20 chars: letters, numbers, underscore</p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="displayName">Display name</Label>
-              <Input
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Shadow Striker"
-              />
-            </div>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Enter the arena"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <main className="min-h-svh bg-background px-4 py-10 sm:py-16">
+      <div className="mx-auto w-full max-w-md">
+        <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+          Player Setup
+        </p>
+        <Card className="mt-3 w-full">
+          <CardHeader>
+            <CardTitle>Create your player profile</CardTitle>
+            <CardDescription>
+              Pick a username to enter the arena. You start at 1200 Elo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={submit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="shadow_striker"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">3-20 chars: letters, numbers, underscore</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="displayName">Display name</Label>
+                <Input
+                  id="displayName"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Shadow Striker"
+                />
+              </div>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Creating..." : "Enter the arena"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </main>
   )
 }
