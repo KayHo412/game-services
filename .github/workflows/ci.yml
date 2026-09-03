@@ -3,9 +3,11 @@ name: CI
 on:
   push:
     branches:
+      - main
       - master
   pull_request:
     branches:
+      - main
       - master
   workflow_dispatch:
 
@@ -15,13 +17,30 @@ concurrency:
 
 jobs:
   verify:
+    name: Lint, Test & Build
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: game_services
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d game_services"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
 
     env:
       CI: true
       NEXT_TELEMETRY_DISABLED: 1
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/game_services
       BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: test_secret_key_minimum_32_characters_long
 
     steps:
       - name: Checkout repository
@@ -30,7 +49,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -39,8 +58,24 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Push database schema
+        run: npx drizzle-kit push
+
       - name: Test
         run: npm test -- --runInBand
 
-      - name: Build
+      - name: Build Next.js application
         run: npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: game-services-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
