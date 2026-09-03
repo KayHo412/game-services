@@ -18,16 +18,16 @@ The project features a **dark-themed Developer Control Sandbox** (`/`) allowing 
 ## Architecture Overview
 
 ```mermaid
-graph TD
+flowchart TD
     Client["Client / Web UI / Game Client"]
-    
-    subgraph "Next.js App Router (Port 3000)"
+
+    subgraph App["Next.js App Router (Port 3000)"]
         API["API Route Handlers (/api/*)"]
         SSE["Realtime SSE Stream (/api/events)"]
         Dashboard["Developer Sandbox UI (/)"]
     end
-    
-    subgraph "Core Domain & Services"
+
+    subgraph Core["Core Domain & Services"]
         Auth["Better Auth (Email & Password, Sessions)"]
         PlayerService["Player Profile & Presence Service"]
         MatchmakingService["Matchmaking Queue & Worker Pass"]
@@ -35,8 +35,8 @@ graph TD
         FriendService["Friends & Requests Service"]
         EventBus["In-Memory Event Bus (EventEmitter)"]
     end
-    
-    subgraph "Database Layer (Port 5432)"
+
+    subgraph Database["Database Layer (Port 5432)"]
         Drizzle["Drizzle ORM (Type-Safe Query Builder)"]
         Postgres[("PostgreSQL 16 Database")]
     end
@@ -244,6 +244,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 Run the entire application and a PostgreSQL database in isolated containers with a single command:
 
 ### Start the Stack
+
+Before starting the stack, make sure the root `.env` file contains a secret for the app container. Compose loads this file automatically:
+```env
+BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
+BETTER_AUTH_URL="http://localhost:3000"
+```
+
 ```bash
 docker compose up --build
 ```
@@ -258,10 +265,7 @@ The PostgreSQL container exposes port `5432` to your host machine. You can push 
 npx drizzle-kit push
 ```
 
-Alternatively, you can execute the push command directly inside the running container:
-```bash
-docker compose exec app npx drizzle-kit push
-```
+This uses the `DATABASE_URL` from the root `.env` file, which should point to `localhost:5432` as shown in the local setup above. The production app image contains only the Next.js standalone runtime, so run this command from the host where the development dependency `drizzle-kit` is installed.
 
 ### Stop the Stack
 ```bash

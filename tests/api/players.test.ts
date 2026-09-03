@@ -2,8 +2,8 @@ import { describe, expect, it, jest } from '@jest/globals';
 
 
 jest.mock('../../lib/session', () => ({
-  requireUserId: jest.fn<any>().mockResolvedValue('test-user-id'),
-  getPlayerByUserId: jest.fn<any>().mockResolvedValue(undefined),
+  requireUserId: jest.fn<() => Promise<string>>().mockResolvedValue('test-user-id'),
+  getPlayerByUserId: jest.fn<() => Promise<null>>().mockResolvedValue(null),
   HttpError: class HttpError extends Error {
     status: number;
     constructor(status: number, message: string) {
