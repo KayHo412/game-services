@@ -14,7 +14,6 @@ A modular, production-ready backend services platform designed for competitive m
 The project features a **dark-themed Developer Control Sandbox** (`/`) allowing engineers to audit, simulate, and test all backend domain logic, match flows, and REST endpoints interactively.
 
 ---
----
 
 ## Core System Modules
 
