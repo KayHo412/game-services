@@ -251,9 +251,16 @@ This automatically boots:
 - **`postgres` container**: PostgreSQL 16 Alpine with health check on port `5432`.
 - **`app` container**: Production Next.js standalone container on port `3000`.
 
-### Apply Database Schema inside Docker
+### Apply Database Schema to the Docker Database
+
+The PostgreSQL container exposes port `5432` to your host machine. You can push the schema from your host terminal:
 ```bash
 npx drizzle-kit push
+```
+
+Alternatively, you can execute the push command directly inside the running container:
+```bash
+docker compose exec app npx drizzle-kit push
 ```
 
 ### Stop the Stack

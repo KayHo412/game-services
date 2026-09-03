@@ -2,8 +2,8 @@ import { describe, expect, it, jest } from '@jest/globals';
 
 
 jest.mock('../../lib/session', () => ({
-  requireUserId: jest.fn().mockResolvedValue('test-user-id'),
-  getPlayerByUserId: jest.fn().mockResolvedValue(undefined),
+  requireUserId: jest.fn<any>().mockResolvedValue('test-user-id'),
+  getPlayerByUserId: jest.fn<any>().mockResolvedValue(undefined),
   HttpError: class HttpError extends Error {
     status: number;
     constructor(status: number, message: string) {
@@ -14,12 +14,12 @@ jest.mock('../../lib/session', () => ({
 }));
 
 jest.mock('../../lib/db', () => {
-  const mockSelect = jest.fn().mockReturnValue({
-    from: jest.fn().mockReturnValue({
-      where: jest.fn().mockReturnValue({ limit: async () => [] }),
+  const mockSelect = jest.fn<any>().mockReturnValue({
+    from: jest.fn<any>().mockReturnValue({
+      where: jest.fn<any>().mockReturnValue({ limit: async () => [] }),
     }),
   });
-  const mockInsert = jest.fn().mockReturnValue({ values: jest.fn().mockReturnThis(), returning: jest.fn().mockResolvedValue([{ id: 'p1', email: 'alice@example.com' }]) });
+  const mockInsert = jest.fn<any>().mockReturnValue({ values: jest.fn<any>().mockReturnThis(), returning: jest.fn<any>().mockResolvedValue([{ id: 'p1', email: 'alice@example.com' }]) });
   return { db: { select: mockSelect, insert: mockInsert } };
 });
 
