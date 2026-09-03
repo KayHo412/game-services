@@ -27,7 +27,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/game_services
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-default_secret_key_change_in_production_32_chars}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
       WORKER_SECRET: ${WORKER_SECRET:-}
     depends_on:
