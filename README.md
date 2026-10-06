@@ -37,6 +37,16 @@ The project features a **dark-themed Developer Control Sandbox** (`/`) allowing 
   - Atomically creates `match` and `match_player` records, transitions tickets to `matched`, sets players to `in_match`, and triggers realtime `match_found` notifications.
   - Protected by an optional `WORKER_SECRET` header for secure execution via cron jobs or background schedulers.
 
+### Concurrency Guarantees
+- Matchmaking ticks use a PostgreSQL transaction and advisory lock, so concurrent workers cannot create duplicate matches.
+- Queue joins are idempotent, and PostgreSQL enforces one searching ticket per player.
+- Queue cancellation, match creation, participant membership, and player status changes are protected by conditional transactional updates.
+- Match results lock the match and player records; the first valid result wins and later submissions return `409`.
+- Player profiles and undirected friendship pairs are protected by unique database constraints.
+- Realtime events are published only after a transaction commits. SSE remains best-effort and process-local.
+
+When applying these schema changes to an existing database, inspect and reconcile duplicate player profiles, active tickets, match memberships, and friendship pairs before applying the new unique constraints.
+
 ### 3. Elo Rating & Match Engine
 - **Standard Elo Formula**:
   Expected score for Player A against Player B:

@@ -42,7 +42,14 @@ export async function POST(req: Request) {
         rating: DEFAULT_RATING,
         status: "online",
       })
+      .onConflictDoNothing({ target: player.userId })
       .returning()
+
+    if (!created) {
+      const concurrent = await getPlayerByUserId(userId)
+      if (concurrent) throw new HttpError(409, "Player profile already exists")
+      throw new HttpError(409, "username already taken")
+    }
 
     return ok(created, 201)
   })

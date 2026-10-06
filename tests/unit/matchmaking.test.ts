@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, jest, test } from '@jest/globals';
 const eq = (field: any, value: any) => ({ type: 'eq', field, value });
 const and = (...args: any[]) => ({ type: 'and', args });
 const asc = (field: any) => ({ type: 'asc', field });
+const sql = () => ({ type: 'sql' });
 
 const matchWhere = (row: any, predicate: any): boolean => {
   if (!predicate) return true;
@@ -11,7 +12,7 @@ const matchWhere = (row: any, predicate: any): boolean => {
   return true;
 };
 
-jest.mock('drizzle-orm', () => ({ eq, and, asc }));
+jest.mock('drizzle-orm', () => ({ eq, and, asc, sql }));
 jest.mock('@/lib/events', () => ({ publish: jest.fn() }));
 
 const schema = {
@@ -58,6 +59,7 @@ const makeQueryResult = (table: any, predicate?: any) => {
   return {
     then: (resolve: any) => resolve(rows),
     limit: async (count = rows.length) => rows.slice(0, count),
+    for: () => makeQueryResult(table, predicate),
     orderBy: async () => rows,
   };
 };
@@ -72,6 +74,8 @@ const store: Record<string, any[]> = {
 };
 
 const mockDb: any = {
+  transaction: async (callback: any) => callback(mockDb),
+  execute: async () => undefined,
   delete: async (table: any) => {
     const name = getTableName(table);
     store[name] = [];

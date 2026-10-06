@@ -38,28 +38,47 @@ export async function POST(req: Request) {
     const gameMode = String(body.gameMode ?? "ranked_1v1")
     if (!MODES.includes(gameMode)) throw new HttpError(400, `gameMode must be one of ${MODES.join(", ")}`)
 
-    const existing = await db
-      .select()
-      .from(matchmakingTicket)
-      .where(and(eq(matchmakingTicket.playerId, me.id), eq(matchmakingTicket.status, "searching")))
-      .limit(1)
-    if (existing.length) throw new HttpError(409, "Already in queue")
+    if (me.status === "in_match") throw new HttpError(409, "Already in a match")
 
-    const [ticket] = await db
-      .insert(matchmakingTicket)
-      .values({
-        id: id("ticket"),
-        playerId: me.id,
-        userId: me.userId,
-        gameMode,
-        rating: me.rating,
-        status: "searching",
-      })
-      .returning()
+    const result = await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(matchmakingTicket)
+        .where(and(eq(matchmakingTicket.playerId, me.id), eq(matchmakingTicket.status, "searching")))
+        .limit(1)
+      if (existing) return { ticket: existing, created: false }
 
-    await db.update(player).set({ status: "in_queue", updatedAt: new Date() }).where(eq(player.id, me.id))
+      const [ticket] = await tx
+        .insert(matchmakingTicket)
+        .values({
+          id: id("ticket"),
+          playerId: me.id,
+          userId: me.userId,
+          gameMode,
+          rating: me.rating,
+          status: "searching",
+        })
+        .onConflictDoNothing()
+        .returning()
 
-    return ok(ticket, 201)
+      if (!ticket) {
+        const [concurrent] = await tx
+          .select()
+          .from(matchmakingTicket)
+          .where(and(eq(matchmakingTicket.playerId, me.id), eq(matchmakingTicket.status, "searching")))
+          .limit(1)
+        if (concurrent) return { ticket: concurrent, created: false }
+        throw new HttpError(409, "Unable to join queue")
+      }
+
+      await tx
+        .update(player)
+        .set({ status: "in_queue", updatedAt: new Date() })
+        .where(eq(player.id, me.id))
+      return { ticket, created: true }
+    })
+
+    return ok(result.ticket, result.created ? 201 : 200)
   })
 }
 

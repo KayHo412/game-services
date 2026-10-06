@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, boolean, integer, index } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, boolean, integer, index, uniqueIndex } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
 
 /* -------------------------------------------------------------------------- */
 /*  Better Auth tables (do not rename columns — Better Auth expects these)     */
@@ -84,6 +85,7 @@ export const player = pgTable(
   },
   (t) => ({
     ratingIdx: index("idx_player_rating").on(t.rating),
+    userIdx: uniqueIndex("uq_player_user_id").on(t.userId),
   }),
 )
 
@@ -104,6 +106,7 @@ export const matchmakingTicket = pgTable(
   },
   (t) => ({
     statusModeIdx: index("idx_ticket_status_mode").on(t.status, t.gameMode),
+    activePlayerIdx: uniqueIndex("uq_ticket_searching_player").on(t.playerId).where(sql`status = 'searching'`),
   }),
 )
 
@@ -138,6 +141,7 @@ export const matchPlayer = pgTable(
   },
   (t) => ({
     matchIdx: index("idx_match_player_match").on(t.matchId),
+    uniquePlayerMatchIdx: uniqueIndex("uq_match_player_player").on(t.matchId, t.playerId),
   }),
 )
 
@@ -146,6 +150,7 @@ export const friendship = pgTable("friendship", {
   id: text("id").primaryKey(),
   requesterId: text("requesterId").notNull(),
   addresseeId: text("addresseeId").notNull(),
+  friendshipKey: text("friendshipKey").notNull().unique(),
   // pending | accepted | declined
   status: text("status").default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

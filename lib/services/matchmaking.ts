@@ -1,6 +1,6 @@
 import { db } from "@/lib/db"
 import { matchmakingTicket, match, matchPlayer, player } from "@/lib/db/schema"
-import { and, asc, eq } from "drizzle-orm"
+import { and, asc, eq, sql } from "drizzle-orm"
 import { id } from "@/lib/api"
 import { publish } from "@/lib/events"
 
@@ -25,67 +25,76 @@ export type MatchmakingResult = {
  * Idempotent and safe to call repeatedly (e.g. from a cron/worker).
  */
 export async function runMatchmakingTick(): Promise<MatchmakingResult> {
-  const searching = await db
-    .select()
-    .from(matchmakingTicket)
-    .where(eq(matchmakingTicket.status, "searching"))
-    .orderBy(asc(matchmakingTicket.enqueuedAt))
+  const result = await db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('game-services:matchmaking-tick'))`)
 
-  const now = Date.now()
-  const byMode = new Map<string, typeof searching>()
-  for (const t of searching) {
-    const list = byMode.get(t.gameMode) ?? []
-    list.push(t)
-    byMode.set(t.gameMode, list)
-  }
+    const searching = await tx
+      .select()
+      .from(matchmakingTicket)
+      .where(eq(matchmakingTicket.status, "searching"))
+      .for("update")
+      .orderBy(asc(matchmakingTicket.enqueuedAt))
 
-  const matchedTicketIds: string[] = []
-  let matchesCreated = 0
+    const now = Date.now()
+    const byMode = new Map<string, typeof searching>()
+    for (const t of searching) {
+      const list = byMode.get(t.gameMode) ?? []
+      list.push(t)
+      byMode.set(t.gameMode, list)
+    }
 
-  for (const [gameMode, tickets] of byMode) {
-    // sort by rating so neighbours are the closest candidates
-    const pool = [...tickets].sort((a, b) => a.rating - b.rating)
-    const used = new Set<string>()
+    const matchedTicketIds: string[] = []
+    let matchesCreated = 0
+    const notifications: Array<{ userId: string; event: Parameters<typeof publish>[1] }> = []
 
-    for (let i = 0; i < pool.length; i++) {
-      const a = pool[i]
-      if (used.has(a.id)) continue
+    for (const [gameMode, tickets] of byMode) {
+      const pool = [...tickets].sort((a, b) => a.rating - b.rating)
+      const used = new Set<string>()
 
-      for (let j = i + 1; j < pool.length; j++) {
-        const b = pool[j]
-        if (used.has(b.id)) continue
+      for (let i = 0; i < pool.length; i++) {
+        const a = pool[i]
+        if (used.has(a.id)) continue
 
-        const diff = Math.abs(a.rating - b.rating)
-        const tol = Math.min(ratingTolerance(a.enqueuedAt, now), ratingTolerance(b.enqueuedAt, now))
-        if (diff <= tol) {
-          await createMatch(gameMode, a, b)
-          used.add(a.id)
-          used.add(b.id)
-          matchedTicketIds.push(a.id, b.id)
-          matchesCreated++
-          break
+        for (let j = i + 1; j < pool.length; j++) {
+          const b = pool[j]
+          if (used.has(b.id)) continue
+
+          const diff = Math.abs(a.rating - b.rating)
+          const tol = Math.min(ratingTolerance(a.enqueuedAt, now), ratingTolerance(b.enqueuedAt, now))
+          if (diff <= tol) {
+            notifications.push(...(await createMatch(tx, gameMode, a, b)))
+            used.add(a.id)
+            used.add(b.id)
+            matchedTicketIds.push(a.id, b.id)
+            matchesCreated++
+            break
+          }
         }
       }
     }
-  }
 
-  return { scanned: searching.length, matchesCreated, matchedTicketIds }
+    return { result: { scanned: searching.length, matchesCreated, matchedTicketIds }, notifications }
+  })
+
+  for (const notification of result.notifications) publish(notification.userId, notification.event)
+  return result.result
 }
 
 async function createMatch(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   gameMode: string,
   a: typeof matchmakingTicket.$inferSelect,
   b: typeof matchmakingTicket.$inferSelect,
-) {
+): Promise<Array<{ userId: string; event: Parameters<typeof publish>[1] }>> {
   const matchId = id("match")
 
-  await db.insert(match).values({
+  await tx.insert(match).values({
     id: matchId,
     gameMode,
     status: "active",
   })
 
-  await db.insert(matchPlayer).values([
+  await tx.insert(matchPlayer).values([
     {
       id: id("mp"),
       matchId,
@@ -106,36 +115,38 @@ async function createMatch(
 
   const updatedAt = new Date()
   for (const t of [a, b]) {
-    await db
+    await tx
       .update(matchmakingTicket)
       .set({ status: "matched", matchId, updatedAt })
-      .where(eq(matchmakingTicket.id, t.id))
-    await db.update(player).set({ status: "in_match", updatedAt }).where(eq(player.id, t.playerId))
+      .where(and(eq(matchmakingTicket.id, t.id), eq(matchmakingTicket.status, "searching")))
+    await tx
+      .update(player)
+      .set({ status: "in_match", updatedAt })
+      .where(and(eq(player.id, t.playerId), eq(player.status, "in_queue")))
   }
 
-  // Notify both players in realtime.
-  const [pa] = await db.select().from(player).where(eq(player.id, a.playerId)).limit(1)
-  const [pb] = await db.select().from(player).where(eq(player.id, b.playerId)).limit(1)
-  publish(a.userId, {
-    type: "match_found",
-    matchId,
-    opponent: pb?.displayName ?? "Opponent",
-    gameMode,
-  })
-  publish(b.userId, {
-    type: "match_found",
-    matchId,
-    opponent: pa?.displayName ?? "Opponent",
-    gameMode,
-  })
+  const [pa] = await tx.select().from(player).where(eq(player.id, a.playerId)).limit(1)
+  const [pb] = await tx.select().from(player).where(eq(player.id, b.playerId)).limit(1)
+  return [
+    { userId: a.userId, event: { type: "match_found", matchId, opponent: pb?.displayName ?? "Opponent", gameMode } },
+    { userId: b.userId, event: { type: "match_found", matchId, opponent: pa?.displayName ?? "Opponent", gameMode } },
+  ]
 }
 
 /** Cancel a player's active searching ticket, if any. */
 export async function leaveQueue(playerId: string) {
-  const updatedAt = new Date()
-  await db
-    .update(matchmakingTicket)
-    .set({ status: "cancelled", updatedAt })
-    .where(and(eq(matchmakingTicket.playerId, playerId), eq(matchmakingTicket.status, "searching")))
-  await db.update(player).set({ status: "online", updatedAt }).where(eq(player.id, playerId))
+  await db.transaction(async (tx) => {
+    const updatedAt = new Date()
+    const [cancelled] = await tx
+      .update(matchmakingTicket)
+      .set({ status: "cancelled", updatedAt })
+      .where(and(eq(matchmakingTicket.playerId, playerId), eq(matchmakingTicket.status, "searching")))
+      .returning()
+    if (cancelled) {
+      await tx
+        .update(player)
+        .set({ status: "online", updatedAt })
+        .where(and(eq(player.id, playerId), eq(player.status, "in_queue")))
+    }
+  })
 }

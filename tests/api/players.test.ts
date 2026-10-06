@@ -20,6 +20,7 @@ jest.mock('@/lib/db', () => {
   });
   const mockInsert = jest.fn<any>().mockReturnValue({
     values: jest.fn<any>().mockReturnThis(),
+    onConflictDoNothing: jest.fn<any>().mockReturnThis(),
     returning: jest.fn<any>().mockResolvedValue([{ id: 'p1', email: 'alice@example.com' }]),
   });
 

@@ -63,9 +63,13 @@ export async function sendRequest(requester: PlayerRow, addresseeUsername: strin
       id: id("friend"),
       requesterId: requester.id,
       addresseeId: addressee.id,
+      friendshipKey: [requester.id, addressee.id].sort().join(":"),
       status: "pending",
     })
+    .onConflictDoNothing({ target: friendship.friendshipKey })
     .returning()
+
+  if (!created) throw new HttpError(409, "Friendship already exists")
 
   publish(addressee.userId, { type: "friend_request", from: requester.displayName })
   return created
@@ -80,8 +84,10 @@ export async function respondToRequest(me: PlayerRow, friendshipId: string, acce
   const [updated] = await db
     .update(friendship)
     .set({ status: accept ? "accepted" : "declined", updatedAt: new Date() })
-    .where(eq(friendship.id, friendshipId))
+    .where(and(eq(friendship.id, friendshipId), eq(friendship.status, "pending")))
     .returning()
+
+  if (!updated) throw new HttpError(409, "Request already resolved")
 
   if (accept) {
     const requester = await playerById(f.requesterId)

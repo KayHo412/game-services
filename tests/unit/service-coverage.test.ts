@@ -71,6 +71,7 @@ const makeQueryResult = (table: any, predicate?: any) => {
   return {
     then: (resolve: any) => resolve(rows),
     limit: async (max = rows.length) => rows.slice(0, max),
+    for: () => makeQueryResult(table, predicate),
     orderBy: async () => rows,
   }
 }
@@ -88,6 +89,7 @@ const mockDb: any = {
       const name = getTableName(table)
       store[name].push(...rows.map((row) => ({ ...row })))
       return {
+        onConflictDoNothing: () => ({ returning: async () => rows }),
         returning: async () => rows,
       }
     },
@@ -112,6 +114,7 @@ const mockDb: any = {
       store[name] = (store[name] ?? []).filter((row) => !matchWhere(row, predicate))
     },
   }),
+  transaction: async (callback: any) => callback(mockDb),
 }
 
 jest.mock('drizzle-orm', () => ({ eq, and, or }))
