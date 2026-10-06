@@ -15,4 +15,7 @@ __v0_jsx-dev-runtime.ts
 node_modules
 .next/
 coverage/
+.eslintcache
+*.tsbuildinfo
+.npm/
 .DS_Store

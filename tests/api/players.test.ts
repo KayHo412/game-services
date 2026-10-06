@@ -1,7 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
-
-jest.mock('../../lib/session', () => ({
+jest.mock('@/lib/session', () => ({
   requireUserId: jest.fn<() => Promise<string>>().mockResolvedValue('test-user-id'),
   getPlayerByUserId: jest.fn<() => Promise<null>>().mockResolvedValue(null),
   HttpError: class HttpError extends Error {
@@ -10,20 +9,24 @@ jest.mock('../../lib/session', () => ({
       super(message);
       this.status = status;
     }
-  }
+  },
 }));
 
-jest.mock('../../lib/db', () => {
+jest.mock('@/lib/db', () => {
   const mockSelect = jest.fn<any>().mockReturnValue({
     from: jest.fn<any>().mockReturnValue({
       where: jest.fn<any>().mockReturnValue({ limit: async () => [] }),
     }),
   });
-  const mockInsert = jest.fn<any>().mockReturnValue({ values: jest.fn<any>().mockReturnThis(), returning: jest.fn<any>().mockResolvedValue([{ id: 'p1', email: 'alice@example.com' }]) });
+  const mockInsert = jest.fn<any>().mockReturnValue({
+    values: jest.fn<any>().mockReturnThis(),
+    returning: jest.fn<any>().mockResolvedValue([{ id: 'p1', email: 'alice@example.com' }]),
+  });
+
   return { db: { select: mockSelect, insert: mockInsert } };
 });
 
-const { POST } = require('../../app/api/players/route') as typeof import('../../app/api/players/route');
+const { POST } = require('@/app/api/players/route') as typeof import('@/app/api/players/route');
 
 describe('POST /api/players', () => {
   it('creates a new player', async () => {

@@ -1,11 +1,68 @@
 import { beforeAll, describe, expect, jest, test } from '@jest/globals';
 
-jest.mock('@/lib/db/schema', () => ({
-  matchmakingTicket: 'matchmakingTicket',
-  player: 'player',
-  match: 'match',
-  matchPlayer: 'matchPlayer',
-}));
+const eq = (field: any, value: any) => ({ type: 'eq', field, value });
+const and = (...args: any[]) => ({ type: 'and', args });
+const asc = (field: any) => ({ type: 'asc', field });
+
+const matchWhere = (row: any, predicate: any): boolean => {
+  if (!predicate) return true;
+  if (predicate.type === 'eq') return row[predicate.field] === predicate.value;
+  if (predicate.type === 'and') return predicate.args.every((item: any) => matchWhere(row, item));
+  return true;
+};
+
+jest.mock('drizzle-orm', () => ({ eq, and, asc }));
+jest.mock('@/lib/events', () => ({ publish: jest.fn() }));
+
+const schema = {
+  matchmakingTicket: {
+    id: 'id',
+    playerId: 'playerId',
+    userId: 'userId',
+    gameMode: 'gameMode',
+    rating: 'rating',
+    status: 'status',
+    matchId: 'matchId',
+    enqueuedAt: 'enqueuedAt',
+    updatedAt: 'updatedAt',
+  },
+  player: {
+    id: 'id',
+    userId: 'userId',
+    username: 'username',
+    displayName: 'displayName',
+    rating: 'rating',
+    status: 'status',
+  },
+  match: {
+    id: 'id',
+    gameMode: 'gameMode',
+    status: 'status',
+  },
+  matchPlayer: {
+    id: 'id',
+    matchId: 'matchId',
+    playerId: 'playerId',
+    userId: 'userId',
+    team: 'team',
+    ratingBefore: 'ratingBefore',
+  },
+};
+
+const tableNames = new Map(Object.entries(schema).map(([key, value]) => [value, key]));
+const getTableName = (table: any) => (typeof table === 'string' ? table : tableNames.get(table) ?? 'unknown');
+
+const makeQueryResult = (table: any, predicate?: any) => {
+  const name = getTableName(table);
+  const rows = predicate ? (store[name] ?? []).filter((row) => matchWhere(row, predicate)) : (store[name] ?? []);
+  return {
+    then: (resolve: any) => resolve(rows),
+    limit: async (count = rows.length) => rows.slice(0, count),
+    orderBy: async () => rows,
+  };
+};
+
+jest.mock('@/lib/db/schema', () => schema);
 
 const store: Record<string, any[]> = {
   matchmakingTicket: [],
@@ -15,32 +72,39 @@ const store: Record<string, any[]> = {
 };
 
 const mockDb: any = {
-  delete: async (table: string) => {
-    store[table] = [];
+  delete: async (table: any) => {
+    const name = getTableName(table);
+    store[name] = [];
   },
-  insert: (table: string) => ({
+  insert: (table: any) => ({
     values: async (vals: any) => {
-      if (Array.isArray(vals)) store[table].push(...vals.map((v) => ({ ...v })));
-      else store[table].push({ ...vals });
+      const rows = Array.isArray(vals) ? vals : [vals];
+      const name = getTableName(table);
+      store[name].push(...rows.map((v) => ({ ...v })));
       return Promise.resolve();
     },
   }),
   select: () => ({
-    from: (table: string) => ({
-      where: () => ({
-        orderBy: async () => store[table] ?? [],
-        limit: async () => store[table] ?? [],
-      }),
-      // allow direct await on from(...)
-      then: (resolve: any) => resolve(store[table] ?? []),
+    from: (table: any) => ({
+      where: (predicate: any) => makeQueryResult(table, predicate),
+      then: (resolve: any) => resolve(store[getTableName(table)] ?? []),
     }),
   }),
-  update: (_table: string) => ({ set: () => ({ where: async () => {} }) }),
+  update: (table: any) => ({
+    set: (changes: any) => ({
+      where: async (predicate: any) => {
+        const name = getTableName(table);
+        store[name] = (store[name] ?? []).map((row) =>
+          matchWhere(row, predicate) ? { ...row, ...changes } : row,
+        );
+      },
+    }),
+  }),
 };
 
 jest.mock('@/lib/db', () => ({ db: mockDb }));
 
-import { runMatchmakingTick as tick } from '../../lib/services/matchmaking';
+import { runMatchmakingTick as tick } from '@/lib/services/matchmaking';
 
 describe('matchmaking.tick', () => {
   beforeAll(async () => {
@@ -50,21 +114,19 @@ describe('matchmaking.tick', () => {
   });
 
   test('pairs players within tolerance', async () => {
-    // create two players
     await mockDb.insert('player').values([
       { id: 'p1', email: 'p1@example.com', displayName: 'P1', rating: 1500, userId: 'u1' },
       { id: 'p2', email: 'p2@example.com', displayName: 'P2', rating: 1520, userId: 'u2' },
     ]);
 
-    // enqueue them
     await mockDb.insert('matchmakingTicket').values([
       { id: 't1', playerId: 'p1', userId: 'u1', rating: 1500, enqueuedAt: new Date(), gameMode: 'ranked_1v1', status: 'searching' },
       { id: 't2', playerId: 'p2', userId: 'u2', rating: 1520, enqueuedAt: new Date(), gameMode: 'ranked_1v1', status: 'searching' },
     ]);
 
-    await tick();
+    const result = await tick();
 
-    const matches = store.match;
-    expect(matches.length).toBeGreaterThanOrEqual(1);
+    expect(result.matchesCreated).toBeGreaterThanOrEqual(1);
+    expect(store.match.length).toBeGreaterThanOrEqual(1);
   });
 });

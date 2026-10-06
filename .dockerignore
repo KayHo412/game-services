@@ -7,10 +7,8 @@ dist
 
 # Environment and secrets
 .env
-.env*.local
-.env.development
-.env.production
-.env.staging
+.env.*
+.env.example
 
 # Git and logs
 .git
@@ -35,3 +33,6 @@ __tests__
 .idea
 .DS_Store
 Thumbs.db
+.eslintcache
+*.tsbuildinfo
+.npm

@@ -156,74 +156,87 @@ All responses return standard JSON envelopes `{ ok: true, data: ... }` or `{ ok:
 
 ---
 
-## Quick Start & Local Setup
+## Quick Start with Docker Compose
+
+Use this workflow when you open the project and want to run the complete application with PostgreSQL.
 
 ### Prerequisites
-- Node.js 20+ (Node 22 LTS recommended)
-- PostgreSQL 16+ (Local or Cloud instance)
+- Docker Desktop with Docker Compose
+- Node.js 20+ (needed for the one-time schema command)
 
-### 1. Clone & Install Dependencies
+### First-time setup
+
+#### 1. Open a terminal in the project folder
 ```bash
 git clone https://github.com/KayHo412/game-services.git
 cd game-services
+```
+
+#### 2. Create the environment file
+
+Copy the example file and replace the placeholder secret with a long random value:
+```bash
+cp .env.example .env
+```
+
+#### 3. Install host dependencies
+
+The host install is needed so `drizzle-kit` is available to initialize the database:
+```bash
 npm install
 ```
 
-### 2. Configure Environment Variables
-Create a `.env` file in the project root:
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/game_services"
-BETTER_AUTH_SECRET="your-32-character-secret-key-goes-here"
-BETTER_AUTH_URL="http://localhost:3000"
-# WORKER_SECRET="" # Optional: protect the tick worker endpoint
-```
-
-### 3. Push Database Schema
+#### 4. Start the containers
 ```bash
-npx drizzle-kit push
+docker compose up --build -d
 ```
 
-### 4. Start Development Server
+The app is available at [http://localhost:3000](http://localhost:3000).
+
+#### 5. Initialize the database schema
+
+Run this once after creating a new database volume:
 ```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## Running with Docker & Docker Compose
-
-Run the entire application and a PostgreSQL database in isolated containers with a single command:
-
-### Start the Stack
-
-Before starting the stack, make sure the root `.env` file contains a secret for the app container. Compose loads this file automatically:
-```env
-BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
-BETTER_AUTH_URL="http://localhost:3000"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/game_services" npx drizzle-kit push
 ```
 
+Then open [http://localhost:3000/sign-up](http://localhost:3000/sign-up) to create an account.
+
+### Normal daily startup
+
+After the first-time setup, use:
 ```bash
-docker compose up --build
+docker compose up -d
 ```
-This automatically boots:
-- **`postgres` container**: PostgreSQL 16 Alpine with health check on port `5432`.
-- **`app` container**: Production Next.js standalone container on port `3000`.
 
-### Apply Database Schema to the Docker Database
-
-The PostgreSQL container exposes port `5432` to your host machine. You can push the schema from your host terminal:
+Check service status or application logs when needed:
 ```bash
-npx drizzle-kit push
+docker compose ps
+docker compose logs -f app
 ```
 
-This uses the `DATABASE_URL` from the root `.env` file, which should point to `localhost:5432` as shown in the local setup above. The production app image contains only the Next.js standalone runtime, so run this command from the host where the development dependency `drizzle-kit` is installed.
+### Stop and restart
 
-### Stop the Stack
+Stop the containers without deleting database data:
 ```bash
 docker compose down
-# To remove persistent database volume:
+```
+
+Start them again later with:
+```bash
+docker compose up -d
+```
+
+To delete the database and start from an empty database, use this only intentionally:
+```bash
 docker compose down -v
+```
+
+## Alternative: run Next.js locally
+
+If you already have PostgreSQL running locally, configure `DATABASE_URL` in `.env`, apply the schema with `npx drizzle-kit push`, and run:
+```bash
+npm run dev
 ```
 
 ---
